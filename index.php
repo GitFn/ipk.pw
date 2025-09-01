@@ -175,6 +175,7 @@ function getValue($data, $key, $default = '') {
         
         .query-input {
             flex: 1;
+            text-align: center;
             background: rgba(255, 255, 255, 0.1);
             border: 2px solid var(--glass-border);
             border-radius: 10px;
