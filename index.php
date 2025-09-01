@@ -361,7 +361,7 @@ function getValue($data, $key, $default = '') {
         }
         
         .history-item {
-            color: rgb(255 131 131);
+            color: #fff;
             background: rgba(255, 255, 255, 0.1);
             border-radius: 8px;
             padding: 8px 15px;
@@ -371,7 +371,7 @@ function getValue($data, $key, $default = '') {
         }
         
         .history-item:hover {
-            color: rgb(255 131 131);
+            color: #fff;
             background: rgba(255, 255, 255, 0.2);
             transform: translateY(-2px);
         }
