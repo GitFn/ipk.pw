@@ -78,7 +78,7 @@ if (($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ip'])) || isset($_GE
 // 获取API信息
 $client_ip = getClientIP();
 $client_data = callIPAPI($client_ip);
-$week = '❥ 来自 ' .$client_data['ipLocation']. '的朋友，' .$client_data['greeting']. '今天是 ' .$client_data['week'] ;
+$week = ' 来自 ' .$client_data['ipLocation']. '的朋友，' .$client_data['greeting']. '今天是 ' .$client_data['week'] ;
 $server_time = $client_data['serverTime'];$time_parts = explode(' ', $server_time);$current_date = $time_parts[0];$current_time = $time_parts[1];
 function getValue($data, $key, $default = '') {
     return isset($data[$key]) && !empty($data[$key]) ? htmlspecialchars($data[$key]) : $default;
@@ -219,7 +219,7 @@ function getValue($data, $key, $default = '') {
         }
         
         .result-title {
-            font-size: 1.8rem;
+            font-size: 1.5rem;
             font-weight: 700;
             display: flex;
             align-items: center;
@@ -357,6 +357,7 @@ function getValue($data, $key, $default = '') {
         
         .history-container {
             margin-top: 30px;
+            text-align: center;
             display: <?= !empty($_SESSION['query_history']) ? 'block' : 'none' ?>;
         }
         
@@ -433,7 +434,7 @@ function getValue($data, $key, $default = '') {
     <div class="container">
         <div class="query-hero">
             <h1><i class="fas fa-globe-americas"></i> 互联网IP地址库 - https://ipk.pw</h1>
-            <p>IP地址查询工具，快速查询IP地址和域名的详细信息与地理位置</p>
+            <p><i class="fas fa-info-circle"></i> IP地址查询工具，快速查询IP地址和域名的详细信息与地理位置</p>
         </div>
         
         <div class="glass-container">
@@ -461,7 +462,7 @@ function getValue($data, $key, $default = '') {
             <div class="result-container">
                 <div class="result-header">
                     <div class="result-title">
-                        <i class="fas fa-result"></i> 查询结果
+                        <i class="fas fa-globe-americas"></i>查询结果
                         <span class="query-type-badge <?= $is_domain_query ? 'domain-badge' : '' ?>">
                             <?= $is_domain_query ? '域名' : 'IP地址' ?><?= htmlspecialchars($query_result['domain']) ?>
                         </span>
@@ -583,7 +584,7 @@ function getValue($data, $key, $default = '') {
             
             <!-- 查询历史记录 -->
             <div class="history-container">
-                <h4><i class="fas fa-history"></i> 查询历史记录（支持通过URL查询IP或域名信息：/?ip=119.29.29.29 或 /?ip=baidu.com）</h4>
+                <h5><i class="fas fa-history"></i> 查询历史记录（支持通过URL查询IP或域名信息：/?ip=119.29.29.29 或 /?ip=baidu.com）</h5>
                 <div style="text-align: center;margin-top: 10px;">
                     <?php if (!empty($_SESSION['query_history'])): ?>
                         <?php foreach ($_SESSION['query_history'] as $history_item): ?>
@@ -597,7 +598,7 @@ function getValue($data, $key, $default = '') {
             
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-top: 40px;">
                 <div class="glass-card">
-                    <div style=" border-bottom:1px solid var(--glass-border); font-weight:600; padding:15px 20px; border-radius:15px 15px 0 0;">
+                    <div style="text-align: center;border-bottom:1px solid var(--glass-border); font-weight:600; padding:15px 20px; border-radius:15px 15px 0 0;">
                         <h5><i class="fas fa-info-circle"></i> <?= $week.'，现在北京时间：' ?><span id="currentTime"><?= $server_time ?></span</h5>
                     </div>
                     <div style="padding: 20px;">
