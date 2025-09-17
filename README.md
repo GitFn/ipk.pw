@@ -42,8 +42,8 @@
 
 ## 注意事项
 
-- 此工具依赖于第三方 API 服务，服务器端确保可访问(https://apikey.net/api/)
+- 此工具依赖于 API 服务，服务器端确保可访问(https://apikey.net/api/)
+- 开源地址：https://github.com/gitfn/ipk.pw
 
 ## 开源协议
-
 MIT License
