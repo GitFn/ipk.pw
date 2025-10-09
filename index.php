@@ -55,6 +55,7 @@ function callIPAPI($input = '') {
 $query_result = $query_input = '';
 $is_domain_query = false;
 $resolved_ips = [];
+$domain = '';
 
 if (!isset($_SESSION['query_history'])) $_SESSION['query_history'] = [];
 
@@ -62,26 +63,84 @@ if (!isset($_SESSION['query_history'])) $_SESSION['query_history'] = [];
 if (($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ip'])) || isset($_GET['ip'])) {
     $query_input = trim(isset($_POST['ip']) ? $_POST['ip'] : $_GET['ip']);
     if (!empty($query_input)) {
-        $query_result = callIPAPI($query_input);
+        $api_response = callIPAPI($query_input);
+        
+        // 处理API响应
+        if (isset($api_response['error'])) {
+            $query_result = $api_response;
+        } elseif (isset($api_response['code']) && $api_response['code'] == 200) {
+            $query_result = $api_response;
+            $query_result['input'] = $query_input;
+            
+            // 检查是否为域名查询（包含resolvedIPs字段）
+            if (isset($api_response['resolvedIPs']) && is_array($api_response['resolvedIPs'])) {
+                $is_domain_query = true;
+                $resolved_ips = $api_response['resolvedIPs'];
+                $domain = $api_response['domain'] ?? $query_input;
+            }
+        } else {
+            $query_result = ['error' => 'API返回异常: ' . ($api_response['msg'] ?? '未知错误'), 'input' => $query_input];
+        }
+        
         if (!in_array($query_input, $_SESSION['query_history'])) {
             array_unshift($_SESSION['query_history'], $query_input);
             if (count($_SESSION['query_history']) > 10) array_pop($_SESSION['query_history']);
         }
-        
-        if ($query_result && !isset($query_result['error']) && isset($query_result['resolvedIPs'])) {
-            $is_domain_query = true;
-            $resolved_ips = $query_result['resolvedIPs'];
-        }
     }
 }
 
-// 获取API信息
+// 获取客户端信息和API信息
 $client_ip = getClientIP();
-$client_data = callIPAPI($client_ip);
-$week = ' 来自 ' .$client_data['ipLocation']. '的朋友，' .$client_data['greeting']. '今天是 ' .$client_data['week'] ;
-$server_time = $client_data['serverTime'];$time_parts = explode(' ', $server_time);$current_date = $time_parts[0];$current_time = $time_parts[1];
+$client_api_response = callIPAPI($client_ip);
+
+// 正确处理客户端数据
+if (isset($client_api_response['code']) && $client_api_response['code'] == 200) {
+    $client_data = $client_api_response;
+} else {
+    // 如果API调用失败，使用默认数据
+    $client_data = [
+        'ipLocation' => '未知位置',
+        'greeting' => '您好',
+        'week' => '未知日期',
+        'serverTime' => date('Y年m月d日 H:i:s'),
+        'ipAddress' => $client_ip,
+        'ipLong' => '未知',
+        'ipLocation2' => [
+            'country' => '未知',
+            'regionName' => '未知',
+            'city' => '未知',
+            'lat' => '未知',
+            'lon' => '未知',
+            'isp' => '未知',
+            'org' => '未知'
+        ]
+    ];
+}
+
+// 安全地获取周信息
+$week = ' 来自 ' . 
+        (isset($client_data['ipLocation']) ? $client_data['ipLocation'] : '未知位置') . 
+        '的朋友，' . 
+        (isset($client_data['greeting']) ? $client_data['greeting'] : '您好') . 
+        '今天是 ' . 
+        (isset($client_data['week']) ? $client_data['week'] : '未知日期');
+
+// 安全地获取服务器时间
+$server_time = isset($client_data['serverTime']) ? $client_data['serverTime'] : date('Y年m月d日 H:i:s');
+
 function getValue($data, $key, $default = '') {
+    if (!is_array($data)) {
+        return $default;
+    }
     return isset($data[$key]) && !empty($data[$key]) ? htmlspecialchars($data[$key]) : $default;
+}
+
+// 从ipLocation2中提取详细位置信息
+function getLocationDetail($data, $field) {
+    if (isset($data['ipLocation2']) && is_array($data['ipLocation2'])) {
+        return getValue($data['ipLocation2'], $field, '');
+    }
+    return '';
 }
 ?>
 <!DOCTYPE html>
@@ -248,7 +307,6 @@ function getValue($data, $key, $default = '') {
         
         .info-item {
             display: flex;
-            
             justify-content: space-around;
             padding: 15px 0;
             border-bottom: 1px solid #fff;
@@ -465,7 +523,7 @@ function getValue($data, $key, $default = '') {
                     <div class="result-title">
                         <i class="fas fa-globe-americas"></i>查询结果
                         <span class="query-type-badge <?= $is_domain_query ? 'domain-badge' : '' ?>">
-                            <?= $is_domain_query ? '域名' : 'IP地址' ?><?= htmlspecialchars($query_result['domain']) ?>
+                            <?= $is_domain_query ? '域名' : 'IP地址' ?>
                         </span>
                     </div>
                 </div>
@@ -475,9 +533,14 @@ function getValue($data, $key, $default = '') {
                         <i class="fas fa-exclamation-triangle"></i> <?= htmlspecialchars($query_result['error']) ?>
                     </div>
                 <?php else: ?>
+                    <!-- 显示API消息 -->
+                    <div style="margin-bottom: 20px; padding: 15px; background: rgba(255,255,255,0.1); border-radius: 10px;">
+                        <p style="margin: 0; font-style: italic; text-align: center;"><?= getValue($query_result, 'msg') ?></p>
+                    </div>
+                    
                     <?php if ($is_domain_query): ?>
                     <p style="text-align: center; margin-bottom: 20px; font-size: 1.2rem;">
-                        域名 <strong><?= htmlspecialchars($query_result['domain']) ?></strong> 解析到 <?= count($resolved_ips) ?> 个IP地址:
+                        域名 <strong><?= htmlspecialchars($domain) ?></strong> 解析到 <?= count($resolved_ips) ?> 个IP地址:
                     </p>
                     
                     <div class="ip-list">
@@ -506,11 +569,11 @@ function getValue($data, $key, $default = '') {
                                 <div class="ip-coordinates">
                                     <div class="coordinate-item">
                                         <div>纬度</div>
-                                        <div class="coordinate-value"><?= getValue($ip_info, 'ipLatitude', '-') ?></div>
+                                        <div class="coordinate-value"><?= getLocationDetail($ip_info, 'lat') ?></div>
                                     </div>
                                     <div class="coordinate-item">
                                         <div>经度</div>
-                                        <div class="coordinate-value"><?= getValue($ip_info, 'ipLongitude', '-') ?></div>
+                                        <div class="coordinate-value"><?= getLocationDetail($ip_info, 'lon') ?></div>
                                     </div>
                                 </div>
                                 
@@ -525,15 +588,27 @@ function getValue($data, $key, $default = '') {
                                     </div>
                                     <div class="info-item">
                                         <span class="label">国家:</span>
-                                        <span class="value"><?= getValue($ip_info, 'ipCountry') ?></span>
+                                        <span class="value"><?= getLocationDetail($ip_info, 'country') ?></span>
                                     </div>
                                     <div class="info-item">
                                         <span class="label">地区:</span>
-                                        <span class="value"><?= getValue($ip_info, 'ipRegion') ?></span>
+                                        <span class="value"><?= getLocationDetail($ip_info, 'regionName') ?></span>
                                     </div>
                                     <div class="info-item">
                                         <span class="label">城市:</span>
-                                        <span class="value"><?= getValue($ip_info, 'ipCity') ?></span>
+                                        <span class="value"><?= getLocationDetail($ip_info, 'city') ?></span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="label">ISP:</span>
+                                        <span class="value"><?= getLocationDetail($ip_info, 'isp') ?></span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="label">组织:</span>
+                                        <span class="value"><?= getLocationDetail($ip_info, 'org') ?></span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="label">时区:</span>
+                                        <span class="value"><?= getLocationDetail($ip_info, 'timezone') ?></span>
                                     </div>
                                 </div>
                             </div>
@@ -548,11 +623,11 @@ function getValue($data, $key, $default = '') {
                     <div class="ip-coordinates">
                         <div class="coordinate-item">
                             <div>纬度</div>
-                            <div class="coordinate-value"><?= getValue($query_result, 'ipLatitude', '-') ?></div>
+                            <div class="coordinate-value"><?= getLocationDetail($query_result, 'lat') ?></div>
                         </div>
                         <div class="coordinate-item">
                             <div>经度</div>
-                            <div class="coordinate-value"><?= getValue($query_result, 'ipLongitude', '-') ?></div>
+                            <div class="coordinate-value"><?= getLocationDetail($query_result, 'lon') ?></div>
                         </div>
                     </div>
                     
@@ -567,15 +642,27 @@ function getValue($data, $key, $default = '') {
                         </div>
                         <div class="info-item">
                             <span class="label">国家:</span>
-                            <span class="value"><?= getValue($query_result, 'ipCountry') ?></span>
+                            <span class="value"><?= getLocationDetail($query_result, 'country') ?></span>
                         </div>
                         <div class="info-item">
                             <span class="label">地区:</span>
-                            <span class="value"><?= getValue($query_result, 'ipRegion') ?></span>
+                            <span class="value"><?= getLocationDetail($query_result, 'regionName') ?></span>
                         </div>
                         <div class="info-item">
                             <span class="label">城市:</span>
-                            <span class="value"><?= getValue($query_result, 'ipCity') ?></span>
+                            <span class="value"><?= getLocationDetail($query_result, 'city') ?></span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">ISP:</span>
+                            <span class="value"><?= getLocationDetail($query_result, 'isp') ?></span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">组织:</span>
+                            <span class="value"><?= getLocationDetail($query_result, 'org') ?></span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">时区:</span>
+                            <span class="value"><?= getLocationDetail($query_result, 'timezone') ?></span>
                         </div>
                     </div>
                     <?php endif; ?>
@@ -600,7 +687,7 @@ function getValue($data, $key, $default = '') {
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-top: 40px;">
                 <div class="glass-card">
                     <div style="text-align: center;border-bottom:1px solid var(--glass-border); font-weight:600; padding:15px 20px; border-radius:15px 15px 0 0;">
-                        <h5><i class="fas fa-info-circle"></i> <?= $week.'，现在北京时间：' ?><span id="currentTime"><?= $server_time ?></span</h5>
+                        <h5><i class="fas fa-info-circle"></i> <?= $week.'，现在北京时间：' ?><span id="currentTime"><?= $server_time ?></span></h5>
                     </div>
                     <div style="padding: 20px;">
                         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
@@ -615,6 +702,10 @@ function getValue($data, $key, $default = '') {
                             <div style="display: flex; justify-content: space-around; padding: 10px 0; border-bottom: 1px solid #fff;">
                                 <span style="font-weight:600; color:#e9ecef;">数字IP:</span>
                                 <span style="color:#f8f9fa;"><?= getValue($client_data, 'ipLong') ?></span>
+                            </div>
+                            <div style="display: flex; justify-content: space-around; padding: 10px 0; border-bottom: 1px solid #fff;">
+                                <span style="font-weight:600; color:#e9ecef;">城市:</span>
+                                <span style="color:#f8f9fa;"><?= getLocationDetail($client_data, 'city') ?></span>
                             </div>
                         </div>
                     </div>
