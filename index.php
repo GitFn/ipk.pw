@@ -1,22 +1,24 @@
 <?php
 session_start();
 
-function getClientIP() {
-    $ip_keys = ['HTTP_CLIENT_IP', 'HTTP_X_FORWARDED_FOR', 'HTTP_X_FORWARDED', 'HTTP_X_CLUSTER_CLIENT_IP', 'HTTP_FORWARDED_FOR', 'HTTP_FORWARDED', 'REMOTE_ADDR'];
-    
-    foreach ($ip_keys as $key) {
-        if (!empty($_SERVER[$key]) && is_string($_SERVER[$key])) {
-            $ip_list = explode(',', $_SERVER[$key]);
-            foreach ($ip_list as $ip) {
-                $ip = trim($ip);
-                if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
-                    return $ip;
+if (!function_exists('getClientIP')) {
+    function getClientIP() {
+        $ip_keys = ['HTTP_CLIENT_IP', 'HTTP_X_FORWARDED_FOR', 'HTTP_X_FORWARDED', 'HTTP_X_CLUSTER_CLIENT_IP', 'HTTP_FORWARDED_FOR', 'HTTP_FORWARDED', 'REMOTE_ADDR'];
+        
+        foreach ($ip_keys as $key) {
+            if (!empty($_SERVER[$key]) && is_string($_SERVER[$key])) {
+                $ip_list = explode(',', $_SERVER[$key]);
+                foreach ($ip_list as $ip) {
+                    $ip = trim($ip);
+                    if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
+                        return $ip;
+                    }
                 }
             }
         }
+        
+        return $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
     }
-    
-    return $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
 }
 
 function callIPAPI($input = '') {
