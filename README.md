@@ -23,7 +23,7 @@
 
 ## 安装要求
 
-- PHP 5.6 或更高版本
+- PHP、.NET、Java、Python、Go、Node.js 等语言环境全栈支持。
 - 启用 cURL 扩展
 - 支持会话(session)
 
