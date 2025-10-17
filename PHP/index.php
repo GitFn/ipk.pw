@@ -149,7 +149,7 @@ function getLocationDetail($data, $field) {
 <html>
 <head>
     <meta charset="UTF-8">
-    <meta content="ipk.pw 是一个长期免费、稳定可靠的互联网IP地址库。提供精准的IP地址与域名地理位置及详细信息查询，并特别支持CMD、CURL命令行操作，可直接使用 curl ipk.pw/?ip=baidu.com  命令快速获取实时数据，长期为广大网友及开发者和运维人员提供免费、无广告的敏捷服务。" name="description">
+    <meta content="ipk.pw 是一个长期免费、稳定可靠开源的互联网IP地址库。提供精准的IP地址与域名地理位置及详细信息查询，并特别支持CMD、CURL命令行操作，可直接使用 curl ipk.pw/?ip=baidu.com  命令快速获取实时数据，长期为广大网友及开发者和运维人员提供免费、无广告的敏捷服务。" name="description">
 	<meta content="互联网IP地址库 - https://ipk.pw 具有长期安全、稳定、免费、便捷查询互联网IP地址和域名的详细信息与地理位置、支持在命令行界面（CMD里或CURL里）通过命令行使用：curl ipk.pw/?ip=119.29.29.29 或 curl ipk.pw/?ip=baidu.com" name="keywords">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>互联网IP地址库 - IP地址查询工具 curl ipk.pw </title>
