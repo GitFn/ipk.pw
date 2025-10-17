@@ -146,11 +146,13 @@ function getLocationDetail($data, $field) {
 }
 ?>
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html>
 <head>
     <meta charset="UTF-8">
+    <meta content="ipk.pw 是一个长期免费、稳定可靠的互联网IP地址库。提供精准的IP地址与域名地理位置及详细信息查询，并特别支持CMD、CURL命令行操作，可直接使用 curl ipk.pw/?ip=baidu.com  命令快速获取实时数据，长期为广大网友及开发者和运维人员提供免费、无广告的敏捷服务。" name="description">
+	<meta content="互联网IP地址库 - https://ipk.pw 具有长期安全、稳定、免费、便捷查询互联网IP地址和域名的详细信息与地理位置、支持在命令行界面（CMD里或CURL里）通过命令行使用：curl ipk.pw/?ip=119.29.29.29 或 curl ipk.pw/?ip=baidu.com" name="keywords">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>互联网IP地址库 - IP地址查询工具 https://ipk.pw </title>
+    <title>互联网IP地址库 - IP地址查询工具 curl ipk.pw </title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -495,7 +497,8 @@ function getLocationDetail($data, $field) {
     <div class="container">
         <div class="query-hero">
             <h1><i class="fas fa-globe-americas"></i> 互联网IP地址库 - https://ipk.pw</h1>
-            <p><i class="fas fa-info-circle"></i> IP地址查询工具，快速查询IP地址和域名的详细信息与地理位置</p>
+            <p><i class="fas fa-info-circle"></i> 互联网IP地址查询工具，具有长期安全、稳定、免费、便捷查询互联网IP地址和域名的详细信息与地理位置。</p>
+            <p><i class="fas fa-info-circle"></i> 支持在命令行界面（ CMD 或 CURL ）通过命令行使用：curl ipk.pw/?ip=119.29.29.29 或 curl ipk.pw/?ip=baidu.com</p>
         </div>
         
         <div class="glass-container">
@@ -674,7 +677,7 @@ function getLocationDetail($data, $field) {
             
             <!-- 查询历史记录 -->
             <div class="history-container">
-                <h5><i class="fas fa-history"></i> 查询历史记录（支持通过URL查询IP或域名信息：/?ip=119.29.29.29 或 /?ip=baidu.com）</h5>
+                <h5><i class="fas fa-history"></i> 查询历史记录（支持通过URL查询IP或域名信息：https://ipk.pw/?ip=119.29.29.29 或 https://ipk.pw/?ip=baidu.com）</h5>
                 <div style="text-align: center;margin-top: 10px;">
                     <?php if (!empty($_SESSION['query_history'])): ?>
                         <?php foreach ($_SESSION['query_history'] as $history_item): ?>
@@ -717,7 +720,7 @@ function getLocationDetail($data, $field) {
     </div>
 
     <footer style="text-align:center; padding:25px; width:100%;  backdrop-filter:blur(10px); border-radius:15px;">
-        <p>© <?= date('Y') ?> IP地址库（https://ipk.pw）IP地址查询系统 | 基于超级API接口 | 北京时间: <span id="fullTime"><?= $server_time ?></span></p>
+        <p>© <?= date('Y') ?> 互联网IP地址库（https://ipk.pw） | <a href="https://github.com/GitFn/ipk.pw" class="history-item" target="_blank">已开源至Github.com</a> | <a href="https://gitee.com/GitFn/ipk.pw" class="history-item" target="_blank">已开源至Gitee.com</a> | <a href="https://apikey.net/api/" class="history-item" target="_blank">基于超级API接口</a> | 北京时间: <span id="fullTime"><?= $server_time ?></span></p>
     </footer>
 
     <script>
