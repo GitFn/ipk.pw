@@ -150,7 +150,7 @@ function getLocationDetail($data, $field) {
 <head>
     <meta charset="UTF-8">
     <meta content="ipk.pw 是一个长期免费、稳定可靠开源的互联网IP地址库。提供精准的IP地址与域名地理位置及详细信息查询，并特别支持CMD、CURL命令行操作，可直接使用 curl ipk.pw/?ip=baidu.com  命令快速获取实时数据，长期为广大网友及开发者和运维人员提供免费、无广告的敏捷服务。" name="description">
-	<meta content="互联网IP地址库 - https://ipk.pw 具有长期安全、稳定、免费、便捷查询互联网IP地址和域名的详细信息与地理位置、支持在命令行界面（CMD里或CURL里）通过命令行使用：curl ipk.pw/?ip=119.29.29.29 或 curl ipk.pw/?ip=baidu.com" name="keywords">
+	<meta content="互联网IP地址库 - https://ipk.pw 具有长期安全、稳定、免费、敏捷查询互联网IP地址和域名详细信息与地理位置、支持在命令行界面（CMD里或CURL里）通过命令行使用：curl ipk.pw/?ip=baidu.com 或 curl ipk.pw/?ip=119.29.29.29" name="keywords">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>互联网IP地址库 - IP地址查询工具 curl ipk.pw </title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -497,8 +497,8 @@ function getLocationDetail($data, $field) {
     <div class="container">
         <div class="query-hero">
             <h1><i class="fas fa-globe-americas"></i> 互联网IP地址库 - https://ipk.pw</h1>
-            <p><i class="fas fa-info-circle"></i> 互联网IP地址查询工具，具有长期安全、稳定、免费、便捷查询互联网IP地址和域名的详细信息与地理位置。</p>
-            <p><i class="fas fa-info-circle"></i> 支持在命令行界面（ CMD 或 CURL ）通过命令行使用：curl ipk.pw/?ip=119.29.29.29 或 curl ipk.pw/?ip=baidu.com</p>
+            <p><i class="fas fa-info-circle"></i> 互联网IP地址查询工具，具有长期安全、稳定、免费、敏捷查询互联网IP地址和域名详细信息与地理位置。</p>
+            <p><i class="fas fa-info-circle"></i> 支持在CLI命令行界面（ CMD 或 CURL ）通过命令行使用：curl ipk.pw/?ip=baidu.com 或 curl ipk.pw/?ip=119.29.29.29</p>
         </div>
         
         <div class="glass-container">
@@ -677,7 +677,7 @@ function getLocationDetail($data, $field) {
             
             <!-- 查询历史记录 -->
             <div class="history-container">
-                <h5><i class="fas fa-history"></i> 查询历史记录（支持通过URL查询IP或域名信息：https://ipk.pw/?ip=119.29.29.29 或 https://ipk.pw/?ip=baidu.com）</h5>
+                <h5><i class="fas fa-history"></i> 查询历史记录（支持通过URL查询IP或域名信息：https://ipk.pw/?ip=baidu.com 或 https://ipk.pw/?ip=119.29.29.29）</h5>
                 <div style="text-align: center;margin-top: 10px;">
                     <?php if (!empty($_SESSION['query_history'])): ?>
                         <?php foreach ($_SESSION['query_history'] as $history_item): ?>
