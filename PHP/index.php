@@ -428,7 +428,7 @@ function getLocationDetail($data, $field) {
             color: #fff;
             background: rgba(255, 255, 255, 0.1);
             border-radius: 8px;
-            padding: 8px 15px;
+            padding: 4px 15px;
             margin: 5px;
             display: inline-block;
             transition: all 0.3s;
@@ -496,7 +496,7 @@ function getLocationDetail($data, $field) {
 <body>
     <div class="container">
         <div class="query-hero">
-            <h1><i class="fas fa-globe-americas"></i> 互联网IP地址库 - https://ipk.pw</h1>
+            <h2><i class="fas fa-globe-americas"></i> 互联网IP地址库 - https://ipk.pw</h2>
             <p><i class="fas fa-info-circle"></i> 互联网IP地址查询工具，具有长期安全、稳定、免费、敏捷查询互联网IP地址和域名详细信息与地理位置。</p>
             <p><i class="fas fa-info-circle"></i> 支持在CLI命令行界面（ CMD 或 CURL ）通过命令行使用：curl ipk.pw/?ip=baidu.com 或 curl ipk.pw/?ip=119.29.29.29</p>
         </div>
@@ -720,7 +720,7 @@ function getLocationDetail($data, $field) {
     </div>
 
     <footer style="text-align:center; padding:25px; width:100%;  backdrop-filter:blur(10px); border-radius:15px;">
-        <p>© <?= date('Y') ?> 互联网IP地址库（https://ipk.pw） | <a href="https://github.com/GitFn/ipk.pw" class="history-item" target="_blank">已开源至Github.com</a> | <a href="https://gitee.com/GitFn/ipk.pw" class="history-item" target="_blank">已开源至Gitee.com</a> | <a href="https://apikey.net/api/" class="history-item" target="_blank">基于超级API接口</a> | 北京时间: <span id="fullTime"><?= $server_time ?></span></p>
+        <p>© <?= date('Y') ?> 互联网IP地址库（https://ipk.pw） | <a href="https://github.com/GitFn/ipk.pw" class="history-item" target="_blank">已开源至Github.com</a> | <a href="https://gitee.com/GitFn/ipk.pw" class="history-item" target="_blank">已开源至Gitee.com</a> | <a href="https://apikey.net/api/" class="history-item" target="_blank">基于超级API接口开发</a> | 北京时间: <span id="fullTime"><?= $server_time ?></span></p>
     </footer>
 
     <script>
