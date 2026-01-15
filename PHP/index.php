@@ -733,7 +733,7 @@ function getLocationDetail($data, $field) {
     </div>
 
     <footer style="text-align:center; padding:25px; width:100%;  backdrop-filter:blur(10px); border-radius:15px;">
-        <p>© <?= date('Y') ?> 互联网IP地址库 - https://ipk.pw  <a href="https://github.com/GitFn/ipk.pw" class="history-item" target="_blank">本项目已开源至Github和Gitee</a>  <a href="https://beian.miit.gov.cn" class="history-item" target="_blank">京ICP备2025153036号-1</a>  北京时间: <span id="fullTime"><?= $server_time ?></span></p>
+        <p>© <?= date('Y') ?> 互联网IP地址库 - https://ipk.pw  <a href="https://github.com/GitFn/ipk.pw" class="history-item" target="_blank">本项目已开源至Github和Gitee</a>  <a href="https://apikey.net/api/" class="history-item" target="_blank">基于超级API项目接口开发</a>  北京时间: <span id="fullTime"><?= $server_time ?></span></p>
     </footer>
 
     <script>
