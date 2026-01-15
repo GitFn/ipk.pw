@@ -91,11 +91,11 @@ if (($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ip'])) || isset($_GE
     }
 }
 
-// 获取客户端信息和API信息
+// 获取互联网信息和API信息
 $client_ip = getClientIP();
 $client_api_response = callIPAPI($client_ip);
 
-// 正确处理客户端数据
+// 正确处理互联网数据
 if (isset($client_api_response['code']) && $client_api_response['code'] == 200) {
     $client_data = $client_api_response;
 } else {
@@ -148,11 +148,22 @@ function getLocationDetail($data, $field) {
 <!DOCTYPE html>
 <html>
 <head>
+    
     <meta charset="UTF-8">
-    <meta content="ipk.pw 是一个长期免费、稳定可靠开源的互联网IP地址库。提供精准的IP地址与域名地理位置及详细信息查询，并特别支持CMD、CURL命令行操作，可直接使用 curl ipk.pw/?ip=baidu.com  命令快速获取实时数据，长期为广大网友及开发者和运维人员提供免费、无广告的敏捷服务。" name="description">
-	<meta content="互联网IP地址库 - https://ipk.pw 具有长期安全、稳定、免费、敏捷查询互联网IP地址和域名详细信息与地理位置、支持在命令行界面（CMD里或CURL里）通过命令行使用：curl ipk.pw/?ip=baidu.com 或 curl ipk.pw/?ip=119.29.29.29" name="keywords">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>互联网IP地址库 - IP地址查询工具 curl ipk.pw </title>
+    <title>🌍 ipk.pw | 互联网IP地址库 - 免费互联网IP查询工具 | curl ipk.pw</title>
+    <meta name="description" content="免费、开源、精准、无限制的全球IP地址与域名地理位置查询服务。支持命令行curl快速查询：curl ipk.pw 或 curl ipk.pw/?ip=119.29.29.29 或 ipk.pw/?ip=baidu.com、支持在操作系统的命令行工具（如Windows的CMD/PowerShell，或Mac/Linux的终端）中，使用 curl 命令来查询IP信息。">
+    <meta name="keywords" content="互联网IP地址库,全球IP地址库,IP查询,地理位置查询,命令行IP查询,curl ipk.pw,免费IP库,开源IP库、Github.com/GitFn/ipk.pw、Gitee.com/GitFn/ipk.pw">
+    <meta name="author" content="互联网IP地址库">
+    
+    <!-- Open Graph / Social Media -->
+    <meta property="og:title" content="🌍 互联网IP地址库 - 专注提供实时、免费的客户端IP地理位置查询工具及API接口 | IPK: The Keystone & Core Key to Client IP">
+    <meta property="og:description" content="互联网IP地址库免费、开源、精准、无限制的全球IP地址与域名地理位置查询服务">
+    <meta property="og:url" content="https://ipk.pw">
+    <meta property="og:type" content="website">
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://ipk.pw">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -428,7 +439,7 @@ function getLocationDetail($data, $field) {
             color: #fff;
             background: rgba(255, 255, 255, 0.1);
             border-radius: 8px;
-            padding: 4px 15px;
+            padding: 4px 20px;
             margin: 5px;
             display: inline-block;
             transition: all 0.3s;
@@ -497,8 +508,8 @@ function getLocationDetail($data, $field) {
     <div class="container">
         <div class="query-hero">
             <h2><i class="fas fa-globe-americas"></i> 互联网IP地址库 - https://ipk.pw</h2>
-            <p><i class="fas fa-info-circle"></i> 互联网IP地址查询工具，具有长期安全、稳定、免费、敏捷查询互联网IP地址和域名详细信息与地理位置。</p>
-            <p><i class="fas fa-info-circle"></i> 支持在CLI命令行界面（ CMD 或 CURL ）通过命令行使用：curl ipk.pw/?ip=baidu.com 或 curl ipk.pw/?ip=119.29.29.29</p>
+            <p><i class="fas fa-info-circle"></i> 互联网IP地址库长期提供安全、稳定、免费、敏捷查询全球互联网IP地址和域名与位置的服务。</p>
+            <p><i class="fas fa-info-circle"></i> 全面支持CLI命令行界面使用：curl https://ipk.pw/?ip=baidu.com 或 curl ipk.pw/?ip=119.29.29.29 或 curl ipk.pw</p>
         </div>
         
         <div class="glass-container">
@@ -515,10 +526,12 @@ function getLocationDetail($data, $field) {
                 </form>
                 
                 <div style="display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; margin: 15px 0;">
-					<a href="?ip=119.29.29.29" class="history-item">119.29.29.29</a>
-                    <a href="?ip=8.8.8.8" class="history-item">8.8.8.8</a>
-                    <a href="?ip=114.114.114.114" class="history-item">114.114.114.114</a>
                     <a href="?ip=baidu.com" class="history-item">baidu.com</a>
+                    <a href="?ip=114.114.114.114" class="history-item">114.114.114.114</a>
+					<a href="?ip=119.29.29.29" class="history-item">119.29.29.29</a>
+					<a href="?ip=223.5.5.5" class="history-item">223.5.5.5</a>
+                    <a href="?ip=8.8.8.8" class="history-item">8.8.8.8</a>
+                    <a href="?ip=google.com" class="history-item">Google.com</a>
                 </div>
             </div>
             
@@ -720,7 +733,7 @@ function getLocationDetail($data, $field) {
     </div>
 
     <footer style="text-align:center; padding:25px; width:100%;  backdrop-filter:blur(10px); border-radius:15px;">
-        <p>© <?= date('Y') ?> 互联网IP地址库（https://ipk.pw） | <a href="https://github.com/GitFn/ipk.pw" class="history-item" target="_blank">已开源至Github.com</a> | <a href="https://gitee.com/GitFn/ipk.pw" class="history-item" target="_blank">已开源至Gitee.com</a> | <a href="https://apikey.net/api/" class="history-item" target="_blank">基于超级API接口开发</a> | 北京时间: <span id="fullTime"><?= $server_time ?></span></p>
+        <p>© <?= date('Y') ?> 互联网IP地址库 - https://ipk.pw  <a href="https://github.com/GitFn/ipk.pw" class="history-item" target="_blank">本项目已开源至Github和Gitee</a>  <a href="https://beian.miit.gov.cn" class="history-item" target="_blank">京ICP备2025153036号-1</a>  北京时间: <span id="fullTime"><?= $server_time ?></span></p>
     </footer>
 
     <script>
