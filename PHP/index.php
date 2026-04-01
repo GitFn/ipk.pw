@@ -1,9 +1,14 @@
 <?php
 session_start();
 
+/**
+ * 获取客户端IP地址
+ * @return string 客户端IP地址
+ */
 if (!function_exists('getClientIP')) {
-    function getClientIP() {
-        $ip_keys = ['HTTP_CLIENT_IP', 'HTTP_X_FORWARDED_FOR', 'HTTP_X_FORWARDED', 'HTTP_X_CLUSTER_CLIENT_IP', 'HTTP_FORWARDED_FOR', 'HTTP_FORWARDED', 'REMOTE_ADDR'];
+    function getClientIP(): string {
+        $ip_keys = ['HTTP_CLIENT_IP', 'HTTP_X_FORWARDED_FOR', 'HTTP_X_FORWARDED', 
+                   'HTTP_X_CLUSTER_CLIENT_IP', 'HTTP_FORWARDED_FOR', 'HTTP_FORWARDED', 'REMOTE_ADDR'];
         
         foreach ($ip_keys as $key) {
             if (!empty($_SERVER[$key]) && is_string($_SERVER[$key])) {
@@ -21,128 +26,347 @@ if (!function_exists('getClientIP')) {
     }
 }
 
-function callIPAPI($input = '') {
-    if (empty($input)) $input = getClientIP();
+/**
+ * 发送API请求
+ * @param string $url API地址
+ * @param array $context 上下文选项
+ * @param int $retry 重试次数
+ * @return string|false API响应内容
+ */
+function sendApiRequest(string $url, array $context = [], int $retry = 2) {
+    $context = array_merge([
+        'http' => [
+            'timeout' => 5,
+            'user_agent' => 'IP Query Tool/2.0'
+        ],
+        'ssl' => [
+            'verify_peer' => false,
+            'verify_peer_name' => false
+        ]
+    ], $context);
     
-    if (!filter_var($input, FILTER_VALIDATE_IP) && !filter_var($input, FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME)) {
-        return ['error' => '无效的IP地址或域名', 'input' => $input];
-    }
+    $context = stream_context_create($context);
     
-    $api_url = "https://apikey.net/api/index?ip=" . urlencode($input);
-    $ch = curl_init();
-    curl_setopt_array($ch, [
-        CURLOPT_URL => $api_url,
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_TIMEOUT => 10,
-        CURLOPT_SSL_VERIFYPEER => false,
-        CURLOPT_USERAGENT => 'IP Query Tool/1.0'
-    ]);
-    
-    $response = curl_exec($ch);
-    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    $curl_error = curl_error($ch);
-    curl_close($ch);
-    
-    if ($http_code == 200 && !empty($response)) {
-        $data = json_decode($response, true);
-        if (json_last_error() === JSON_ERROR_NONE && isset($data['code']) && $data['code'] == 200) {
-            return $data;
+    for ($i = 0; $i <= $retry; $i++) {
+        $response = @file_get_contents($url, false, $context);
+        if ($response !== false) {
+            return $response;
+        }
+        // 重试前等待一段时间
+        if ($i < $retry) {
+            usleep(500000); // 500ms
         }
     }
     
-    return ['error' => 'API请求失败: ' . ($curl_error ?: "HTTP {$http_code}"), 'input' => $input];
+    return false;
 }
 
-// 处理查询
-$query_result = $query_input = '';
-$is_domain_query = false;
-$resolved_ips = [];
-$domain = '';
-
-if (!isset($_SESSION['query_history'])) $_SESSION['query_history'] = [];
-
-// 统一处理POST和GET请求
-if (($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ip'])) || isset($_GET['ip'])) {
-    $query_input = trim(isset($_POST['ip']) ? $_POST['ip'] : $_GET['ip']);
-    if (!empty($query_input)) {
-        $api_response = callIPAPI($query_input);
-        
-        // 处理API响应
-        if (isset($api_response['error'])) {
-            $query_result = $api_response;
-        } elseif (isset($api_response['code']) && $api_response['code'] == 200) {
-            $query_result = $api_response;
-            $query_result['input'] = $query_input;
-            
-            // 检查是否为域名查询（包含resolvedIPs字段）
-            if (isset($api_response['resolvedIPs']) && is_array($api_response['resolvedIPs'])) {
-                $is_domain_query = true;
-                $resolved_ips = $api_response['resolvedIPs'];
-                $domain = $api_response['domain'] ?? $query_input;
-            }
-        } else {
-            $query_result = ['error' => 'API返回异常: ' . ($api_response['msg'] ?? '未知错误'), 'input' => $query_input];
-        }
-        
-        if (!in_array($query_input, $_SESSION['query_history'])) {
-            array_unshift($_SESSION['query_history'], $query_input);
-            if (count($_SESSION['query_history']) > 10) array_pop($_SESSION['query_history']);
-        }
-    }
+/**
+ * 从位置字符串解析国家、地区和城市
+ * @param string $location 位置字符串
+ * @return array 包含国家、地区和城市的数组
+ */
+function parseLocation(string $location): array {
+    $parts = explode(' ', $location);
+    return [
+        'country' => $parts[0] ?? '未知',
+        'regionName' => $parts[1] ?? '未知',
+        'city' => $parts[2] ?? '未知'
+    ];
 }
 
-// 获取互联网信息和API信息
-$client_ip = getClientIP();
-$client_api_response = callIPAPI($client_ip);
+/**
+ * 快速获取IP归属地信息（仅国家）
+ * @param string $ip IP地址
+ * @param array $context 上下文选项
+ * @return string IP归属地信息
+ */
+function getIpLocationQuick(string $ip, array $context = []): string {
+    $api_url = "https://apikey.net/api/?ipk=" . urlencode($ip);
+    $response = sendApiRequest($api_url, $context, 1); // 只重试1次，快速响应
+    
+    if ($response !== false) {
+        // 去除可能的首尾空格
+        $location = trim($response);
+        if (!empty($location)) {
+            return $location;
+        }
+    }
+    
+    return '未知';
+}
 
-// 正确处理互联网数据
-if (isset($client_api_response['code']) && $client_api_response['code'] == 200) {
-    $client_data = $client_api_response;
-} else {
-    // 如果API调用失败，使用默认数据
-    $client_data = [
-        'ipLocation' => '未知位置',
-        'greeting' => '您好',
-        'week' => '未知日期',
-        'serverTime' => date('Y年m月d日 H:i:s'),
-        'ipAddress' => $client_ip,
-        'ipLong' => '未知',
-        'ipLocation2' => [
-            'country' => '未知',
-            'regionName' => '未知',
-            'city' => '未知',
+/**
+ * 获取IP信息
+ * @param string $ip IP地址
+ * @param array $context 上下文选项
+ * @param bool $quick_mode 是否使用快速模式（仅获取归属地）
+ * @return array IP信息数组
+ */
+function getIpInfo(string $ip, array $context = [], bool $quick_mode = false): array {
+    if ($quick_mode) {
+        // 使用快速API获取仅归属地信息
+        $location = getIpLocationQuick($ip, $context);
+        return [
+            'ipAddress' => $ip,
+            'ipLong' => '未知',
+            'ipLocation' => $location,
+            'ipLocation2' => [
+                'country' => $location,
+                'regionName' => '未知',
+                'city' => '未知',
+                'lat' => '未知',
+                'lon' => '未知',
+                'isp' => '未知',
+                'org' => '未知'
+            ]
+        ];
+    }
+    
+    // 完整API查询
+    $api_url = "https://apikey.net/api/?ip=" . urlencode($ip);
+    $response = sendApiRequest($api_url, $context);
+    
+    if ($response === false) {
+        // 如果完整API失败，回退到快速API
+        $location = getIpLocationQuick($ip, $context);
+        return [
+            'ipAddress' => $ip,
+            'ipLong' => '未知',
+            'ipLocation' => $location,
+            'ipLocation2' => [
+                'country' => $location,
+                'regionName' => '未知',
+                'city' => '未知',
+                'lat' => '未知',
+                'lon' => '未知',
+                'isp' => '未知',
+                'org' => '未知'
+            ]
+        ];
+    }
+    
+    $api_data = json_decode($response, true);
+    if (json_last_error() !== JSON_ERROR_NONE || !isset($api_data['code']) || $api_data['code'] != 200) {
+        // 如果解析失败，回退到快速API
+        $location = getIpLocationQuick($ip, $context);
+        return [
+            'ipAddress' => $ip,
+            'ipLong' => '未知',
+            'ipLocation' => $location,
+            'ipLocation2' => [
+                'country' => $location,
+                'regionName' => '未知',
+                'city' => '未知',
+                'lat' => '未知',
+                'lon' => '未知',
+                'isp' => '未知',
+                'org' => '未知'
+            ]
+        ];
+    }
+    
+    $location = parseLocation($api_data['data']['location'] ?? '');
+    
+    return [
+        'ipAddress' => $api_data['data']['ip'] ?? $ip,
+        'ipLong' => $api_data['data']['ip_long'] ?? '未知',
+        'ipLocation' => $api_data['data']['location'] ?? '未知',
+        'ipLocation2' => array_merge($location, [
             'lat' => '未知',
             'lon' => '未知',
             'isp' => '未知',
             'org' => '未知'
-        ]
+        ])
     ];
 }
 
-// 安全地获取周信息
-$week = ' 来自 ' . 
-        (isset($client_data['ipLocation']) ? $client_data['ipLocation'] : '未知位置') . 
-        '的朋友，' . 
-        (isset($client_data['greeting']) ? $client_data['greeting'] : '您好') . 
-        '今天是 ' . 
-        (isset($client_data['week']) ? $client_data['week'] : '未知日期');
-
-// 安全地获取服务器时间
-$server_time = isset($client_data['serverTime']) ? $client_data['serverTime'] : date('Y年m月d日 H:i:s');
-
-function getValue($data, $key, $default = '') {
-    if (!is_array($data)) {
-        return $default;
+/**
+ * 调用IP查询API
+ * @param string $input IP地址或域名
+ * @return array API响应结果
+ */
+function callIPAPI(string $input = ''): array {
+    static $cache = [];
+    
+    if (empty($input)) {
+        $input = getClientIP();
     }
+    
+    // 检查缓存
+    if (isset($cache[$input])) {
+        return $cache[$input];
+    }
+    
+    // 验证输入
+    if (!filter_var($input, FILTER_VALIDATE_IP) && !filter_var($input, FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME)) {
+        return ['error' => '无效的IP地址或域名', 'input' => $input];
+    }
+    
+    $api_url = "https://apikey.net/api/?ip=" . urlencode($input);
+    $response = sendApiRequest($api_url);
+    
+    if ($response === false) {
+        return ['error' => 'API请求失败', 'input' => $input];
+    }
+    
+    $api_data = json_decode($response, true);
+    if (json_last_error() !== JSON_ERROR_NONE || !isset($api_data['code']) || $api_data['code'] != 200) {
+        return ['error' => 'API返回异常', 'input' => $input];
+    }
+    
+    // 转换API响应格式
+    $result = [
+        'code' => $api_data['code'],
+        'msg' => $api_data['message'],
+        'greeting' => $api_data['greeting'],
+        'week' => $api_data['weekday'],
+        'serverTime' => $api_data['server_time'],
+        'input' => $input
+    ];
+    
+    // 处理IP查询响应
+    if (isset($api_data['data']['ip']) && !isset($api_data['data']['records'])) {
+        $location = parseLocation($api_data['data']['location'] ?? '');
+        
+        $result['ipAddress'] = $api_data['data']['ip'];
+        $result['ipLong'] = $api_data['data']['ip_long'];
+        $result['ipLocation'] = $api_data['data']['location'];
+        $result['ipLocation2'] = array_merge($location, [
+            'lat' => '未知',
+            'lon' => '未知',
+            'isp' => '未知',
+            'org' => '未知'
+        ]);
+    }
+    // 处理域名查询响应
+    elseif (isset($api_data['data']['records'])) {
+        $result['domain'] = $api_data['data']['domain'];
+        $result['resolvedIPs'] = [];
+        
+        // 对于域名查询，使用快速API模式获取IP归属地信息
+        // 这样可以减少API调用次数，提高性能
+        $result['resolvedIPs'] = array_map(function($record) {
+            return getIpInfo($record['ip'], [], true); // 使用快速模式
+        }, $api_data['data']['records']);
+    }
+    
+    // 缓存结果
+    $cache[$input] = $result;
+    
+    return $result;
+}
+
+// 初始化查询变量
+$query_result = [];
+$query_input = '';
+$is_domain_query = false;
+$resolved_ips = [];
+$domain = '';
+
+// 初始化查询历史
+if (!isset($_SESSION['query_history'])) {
+    $_SESSION['query_history'] = [];
+}
+
+// 统一处理POST和GET请求
+$input_value = trim($_POST['ip'] ?? $_GET['ip'] ?? '');
+if (!empty($input_value)) {
+    $query_input = $input_value;
+    $api_response = callIPAPI($query_input);
+    
+    // 处理API响应
+    if (isset($api_response['error'])) {
+        $query_result = $api_response;
+    } elseif (isset($api_response['code']) && $api_response['code'] == 200) {
+        $query_result = $api_response;
+        
+        // 检查是否为域名查询
+        if (isset($api_response['resolvedIPs']) && is_array($api_response['resolvedIPs'])) {
+            $is_domain_query = true;
+            $resolved_ips = $api_response['resolvedIPs'];
+            $domain = $api_response['domain'] ?? $query_input;
+        }
+    } else {
+        $query_result = [
+            'error' => 'API返回异常: ' . ($api_response['msg'] ?? '未知错误'),
+            'input' => $query_input
+        ];
+    }
+    
+    // 更新查询历史（去重）
+    $query_history = array_filter($_SESSION['query_history'], function($item) use ($query_input) {
+        return $item !== $query_input;
+    });
+    array_unshift($query_history, $query_input);
+    // 保持历史记录不超过10条
+    $_SESSION['query_history'] = array_slice($query_history, 0, 10);
+}
+
+// 获取客户端IP和信息
+$client_ip = getClientIP();
+$client_api_response = callIPAPI($client_ip);
+
+// 处理客户端数据
+$client_data = [
+    'ipLocation' => '未知位置',
+    'greeting' => '您好',
+    'week' => '未知日期',
+    'serverTime' => date('Y年m月d日 H:i:s'),
+    'ipAddress' => $client_ip,
+    'ipLong' => '未知',
+    'ipLocation2' => [
+        'country' => '未知',
+        'regionName' => '未知',
+        'city' => '未知',
+        'lat' => '未知',
+        'lon' => '未知',
+        'isp' => '未知',
+        'org' => '未知'
+    ]
+];
+
+// 如果API调用成功，更新客户端数据
+if (isset($client_api_response['code']) && $client_api_response['code'] == 200) {
+    // 合并数据，保留默认值作为后备
+    $client_data = array_merge($client_data, $client_api_response);
+    // 确保ipLocation2结构完整
+    $client_data['ipLocation2'] = array_merge(
+        $client_data['ipLocation2'], 
+        $client_api_response['ipLocation2'] ?? []
+    );
+}
+
+// 生成欢迎信息
+$week = sprintf(
+    ' 来自 %s的朋友，%s今天是 %s',
+    $client_data['ipLocation'],
+    $client_data['greeting'],
+    $client_data['week']
+);
+
+// 获取服务器时间
+$server_time = $client_data['serverTime'];
+
+/**
+ * 安全获取数组值并进行HTML转义
+ * @param array $data 数据源数组
+ * @param string $key 键名
+ * @param string $default 默认值
+ * @return string 处理后的值
+ */
+function getValue(array $data, string $key, string $default = ''): string {
     return isset($data[$key]) && !empty($data[$key]) ? htmlspecialchars($data[$key]) : $default;
 }
 
-// 从ipLocation2中提取详细位置信息
-function getLocationDetail($data, $field) {
-    if (isset($data['ipLocation2']) && is_array($data['ipLocation2'])) {
-        return getValue($data['ipLocation2'], $field, '');
-    }
-    return '';
+/**
+ * 从ipLocation2中提取详细位置信息
+ * @param array $data 数据源数组
+ * @param string $field 字段名
+ * @return string 位置信息
+ */
+function getLocationDetail(array $data, string $field): string {
+    return getValue($data['ipLocation2'] ?? [], $field, '');
 }
 ?>
 <!DOCTYPE html>
@@ -164,6 +388,7 @@ function getLocationDetail($data, $field) {
     
     <!-- Canonical URL -->
     <link rel="canonical" href="https://ipk.pw">
+    <link rel="shortcut icon" type="image/x-icon" href="https://ssl.apikey.net/APIkey/favicons.ico" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -502,14 +727,18 @@ function getLocationDetail($data, $field) {
                 gap: 10px;
             }
         }
+        .white-link {
+            text-decoration: none;
+            color: white !important; /* !important 确保优先级最高 */
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="query-hero">
-            <h2><i class="fas fa-globe-americas"></i> 互联网IP地址库 - https://ipk.pw</h2>
-            <p><i class="fas fa-info-circle"></i> 互联网IP地址库长期提供安全、稳定、免费、敏捷查询全球互联网IP地址和域名与位置的服务。</p>
-            <p><i class="fas fa-info-circle"></i> 全面支持CLI命令行界面使用：curl https://ipk.pw/?ip=baidu.com 或 curl ipk.pw/?ip=119.29.29.29 或 curl ipk.pw</p>
+            <h2><i class="fas fa-globe-americas"></i> <a href="https://ipk.pw/chat/" class="white-link" title="欢迎使用互联网IP地址库智能AI助手！" target="_blank">互联网IP地址库 - https://ipk.pw</a>  <a class="white-link" style="font-size: 39px;" href="https://ipk.pw/chat/" target="_blank">🧠</a></h2>
+            <p><i class="fas fa-info-circle"></i> <a href="https://ipk.pw/chat/" class="white-link" title="欢迎使用互联网IP地址库智能AI助手！" target="_blank">互联网IP地址库长期提供安全、稳定、免费、敏捷查询全球互联网IP地址和域名与位置的服务。</a></p>
+            <p><i class="fas fa-info-circle"></i> <a href="https://ipk.pw/chat/" class="white-link" title="欢迎使用互联网IP地址库智能AI助手！" target="_blank">全面支持CLI命令行界面使用：curl https://ipk.pw/?ip=baidu.com 或 curl ipk.pw/?ip=119.29.29.29 或 curl ipk.pw</a></p>
         </div>
         
         <div class="glass-container">
@@ -690,7 +919,7 @@ function getLocationDetail($data, $field) {
             
             <!-- 查询历史记录 -->
             <div class="history-container">
-                <h5><i class="fas fa-history"></i> 查询历史记录（支持通过URL查询IP或域名信息：https://ipk.pw/?ip=baidu.com 或 https://ipk.pw/?ip=119.29.29.29）</h5>
+                <h5><i class="fas fa-history"></i> 查询历史记录（支持通过API查询IP或域名信息：https://ipk.pw/?ip=baidu.com 或 https://ipk.pw/?ip=119.29.29.29）</h5>
                 <div style="text-align: center;margin-top: 10px;">
                     <?php if (!empty($_SESSION['query_history'])): ?>
                         <?php foreach ($_SESSION['query_history'] as $history_item): ?>
@@ -733,7 +962,7 @@ function getLocationDetail($data, $field) {
     </div>
 
     <footer style="text-align:center; padding:25px; width:100%;  backdrop-filter:blur(10px); border-radius:15px;">
-        <p>© <?= date('Y') ?> 互联网IP地址库 - https://ipk.pw  <a href="https://github.com/GitFn/ipk.pw" class="history-item" target="_blank">本项目已开源至Github和Gitee</a>  <a href="https://apikey.net/api/" class="history-item" target="_blank">基于超级API项目接口开发</a>  北京时间: <span id="fullTime"><?= $server_time ?></span></p>
+        <p>© <?= date('Y') ?> 互联网IP地址库 - https://ipk.pw  <a href="https://github.com/GitFn/ipk.pw" class="history-item" title="本项目已开源至Github和Gitee" target="_blank">本项目已开源至Github和Gitee</a>  <a href="https://beian.miit.gov.cn" class="history-item" target="_blank">京ICP备2025153036号-1</a>  北京时间: <span id="fullTime"><?= $server_time ?></span></p>
     </footer>
 
     <script>
